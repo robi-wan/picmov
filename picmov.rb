@@ -4,11 +4,18 @@
 # User: lede55
 # Date: 09.10.2007
 # Time: 17:03:35
+#
+#****************************************************************
+# Version 0.0.3
+# Datum: 15.04.2008
+# Änderungen:
+# - CompoundTimeMapper: Erhält eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der nächste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
+# - TimeMapper verwendet nun als Default einen CompoundTimeMapper mit den Mappern EXIFTimeMapper, ModifiedTimeMapper, CurrentTimeMapper. Somit wird also EXIFTimeMapper als erstes verwendet.
 #****************************************************************
 # Version 0.0.2
 # Datum: 15.04.2008
 # Änderungen:
-# - ModifiedTimeMapper bekommt nun ein Objekt hereingereicht, welches über die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
+# - TimeMapper bekommt nun ein Objekt hereingereicht, welches über die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
 #  Drei Implementierungen für solch ein Objekt bereitgestellt:
 #  - CurrentTimeMapper: Liefert das aktuelle Datum.
 #  - ModifiedTimeMapper: Liefert das modified-Datum der Datei.
@@ -77,7 +84,7 @@ class FileNameModifier
 end
 
 class TimeMapper
-  def initialize(files=[], time_mapper = EXIFTimeMapper.new ,folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
+  def initialize(files=[], time_mapper = CompoundTimeMapper.new(EXIFTimeMapper.new, ModifiedTimeMapper.new, CurrentTimeMapper.new) ,folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
     @files = files
     @time_mapper = time_mapper
     @folder_pattern=folder_pattern
@@ -141,6 +148,24 @@ class EXIFTimeMapper
       EXIFR::JPEG.new(file.path).date_time_original
   end
 
+end
+
+class CompoundTimeMapper
+  
+  def initialize(*time_mapper)
+    @time_mapper = time_mapper
+  end
+  
+  def time_for_mapping(file)
+    @time_mapper.each do |mapper|
+      begin
+        return mapper.time_for_mapping(file)
+      rescue Exception => details
+        print("Error while getting time mapping (mapper=#{mapper.class}) for file #{file.path} => #{details}! Using another mapper!\n")
+      end
+    end
+  end
+    
 end
 
 
