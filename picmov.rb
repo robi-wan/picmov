@@ -6,6 +6,11 @@
 # Time: 17:03:35
 #
 #****************************************************************
+# Version 0.0.4
+# Datum: 15.05.2008
+# Änderungen:
+# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der nächste TimeMapper des CompoundTimeMapper verwendet
+#****************************************************************
 # Version 0.0.3
 # Datum: 15.04.2008
 # Änderungen:
@@ -159,7 +164,9 @@ class CompoundTimeMapper
   def time_for_mapping(file)
     @time_mapper.each do |mapper|
       begin
-        return mapper.time_for_mapping(file)
+      	time = mapper.time_for_mapping(file)
+	raise Exception.new("mapper returned no mapping time") unless time
+        return time
       rescue Exception => details
         print("Error while getting time mapping (mapper=#{mapper.class}) for file #{file.path} => #{details}! Using another mapper!\n")
       end
