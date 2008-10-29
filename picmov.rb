@@ -6,6 +6,13 @@
 # Time: 17:03:35
 #
 #****************************************************************
+# Version 0.0.5
+# Datum: 29.05.2008
+# Änderungen:
+# - In TimeMapper#mapping wird nun File.open mit einem Block anstelle von File.new (ohne close) verwendet. 
+#   Dadurch wird am Ende des Blocks die Datei geschlossen und es können mehr als ca. 500 Dateien 
+#   in einem Durchgang bearbeitet werden.
+#****************************************************************
 # Version 0.0.4
 # Datum: 15.05.2008
 # Änderungen:
@@ -101,19 +108,20 @@ class TimeMapper
   # Liefert ein Array mit DuplicationFiles
   def mapping
     @files.each do |f|
-      file=File.new(f)
-      modified_time = @time_mapper.time_for_mapping(file)
-      file_name_enhancement=modified_time.strftime(@file_pattern)
-      target_folder_name = modified_time.strftime(@folder_pattern)
+      File.open(f, "r") do |file|
+      	modified_time = @time_mapper.time_for_mapping(file)
+      	file_name_enhancement=modified_time.strftime(@file_pattern)
+      	target_folder_name = modified_time.strftime(@folder_pattern)
       ##      puts file.atime
       ##      puts file.ctime
 
-      dup = DuplicationFile.new(file)
-      dup.source = f
-      dup.target = target_folder_name
-      dup.new_name = modify_filename(f, file_name_enhancement)
-      @duplicates << dup
-
+      	dup = DuplicationFile.new(file)
+      	dup.source = f
+      	dup.target = target_folder_name
+      	dup.new_name = modify_filename(f, file_name_enhancement)
+      	@duplicates << dup
+      end
+      
       ## (@sorted_files[target_folder_name]||=[]) << f ##
 
     end
