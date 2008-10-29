@@ -4,7 +4,17 @@
 # User: lede55
 # Date: 09.10.2007
 # Time: 17:03:35
-# To change this template use File | Settings | File Templates.
+#****************************************************************
+# Version 0.0.2
+# Datum: 15.04.2008
+# Änderungen:
+# - ModifiedTimeMapper bekommt nun ein Objekt hereingereicht, welches über die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
+#  Drei Implementierungen für solch ein Objekt bereitgestellt:
+#  - CurrentTimeMapper: Liefert das aktuelle Datum.
+#  - ModifiedTimeMapper: Liefert das modified-Datum der Datei.
+#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Benötigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
+#  EXIFTimeMapper ist die Defaultvariante.
+#****************************************************************
 
 require 'fileutils'
 
@@ -66,10 +76,10 @@ class FileNameModifier
 
 end
 
-
-class ModifiedTimeMapper
-  def initialize(files=[], folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
+class TimeMapper
+  def initialize(files=[], time_mapper = EXIFTimeMapper.new ,folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
     @files = files
+    @time_mapper = time_mapper
     @folder_pattern=folder_pattern
     @file_pattern=file_pattern
     @duplicates=[]
@@ -80,7 +90,7 @@ class ModifiedTimeMapper
   def mapping
     @files.each do |f|
       file=File.new(f)
-      modified_time = file.mtime
+      modified_time = @time_mapper.time_for_mapping(file)
       file_name_enhancement=modified_time.strftime(@file_pattern)
       target_folder_name = modified_time.strftime(@folder_pattern)
       ##      puts file.atime
@@ -105,6 +115,52 @@ class ModifiedTimeMapper
   end
 
 end
+
+class CurrentTimeMapper
+  
+  def time_for_mapping(file)
+    Date.new
+  end
+  
+end
+
+
+class ModifiedTimeMapper
+  
+  def time_for_mapping(file)
+      file.mtime
+  end
+  
+end
+
+class EXIFTimeMapper
+  require 'rubygems'
+  require 'exifr'
+
+  def time_for_mapping(file)
+      EXIFR::JPEG.new(file.path).date_time_original
+  end
+
+end
+
+
+#~ class ModifiedTimeMapper < TimeMapper
+  
+  #~ def time_for_mapping(file)
+      #~ file.mtime
+  #~ end
+  
+#~ end
+
+#~ class EXIFTimeMapper < TimeMapper
+  #~ require 'rubygems'
+  #~ require 'exifr'
+
+  #~ def time_for_mapping(file)
+      #~ EXIFR::JPEG.new(file.path).date_time_original
+  #~ end
+
+#~ end
 
 class DuplicateCopier
 
@@ -158,7 +214,10 @@ if $0 == __FILE__ then
 
     copier = DuplicateCopier.new(target)
 
-    mapper = ModifiedTimeMapper.new(files)
+    #mapper = ModifiedTimeMapper.new(files)
+    mapper = TimeMapper.new(files)
+    
+    
     mapper.mapping.each do |dup|
 #      puts dup.source
 #      puts (dup.target + "/" + dup.new_name)
