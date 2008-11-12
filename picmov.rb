@@ -141,7 +141,7 @@ end
 class CurrentTimeMapper
   
   def time_for_mapping(file)
-    Date.new
+    Time.now
   end
   
 end

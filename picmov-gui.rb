@@ -1,6 +1,9 @@
 # "C:\Program Files\Shoes\0.r970\shoes.exe" D:\home\docs\dev\picmov\picmov-gui.rb
+$:.push(File.join(File.dirname(__FILE__), 'lib'))
+
 require 'yaml'
 require 'picmov'
+require 'settings'
 
 # installiert benï¿½tigte gems beim Start
 Shoes.setup do
@@ -13,11 +16,11 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 500, :resizable
 #  background "#F90".."#F3F"
   background tan, :height => 62
 #  style(Link, :underline => false, :stroke => white)
-#  style(LinkHover, :underline => false, :stroke => white, :fill => nil)
-stack do
-  caption "A Picture Mover", :margin => 8, :stroke => white
-  inscription "Kopieren und umbenennen von Bildern", :stroke => white
-end
+  #  style(LinkHover, :underline => false, :stroke => white, :fill => nil)
+  stack do
+    caption "A Picture Mover", :margin => 8, :stroke => white
+    inscription "Kopieren und umbenennen von Bildern", :stroke => white
+  end
   begin
 
     stack :margin => 10 do
@@ -51,13 +54,12 @@ end
         end
       end
 
-#      flow do
-#        inscription "Die Bilder werden nach diesem Muster umbenannt:"
-#        time_mapper = TimeMapper.new
-#        now = Time.now
-#        file = "DSC2134_#{now.strftime(time_mapper.file_pattern)}.jpg"
-#        inscription "DSC2134.jpg => #{File.join(now.strftime(time_mapper.folder_pattern), file)}"
-#      end
+      flow do
+        time_mapper = TimeMapper.new
+        now = Time.now
+        file = "DSC2134_#{now.strftime(time_mapper.file_pattern)}.jpg"
+        inscription "Die Bilder werden nach diesem Muster umbenannt:\nDSC2134.jpg => #{File.join(now.strftime(time_mapper.folder_pattern), file)}"
+      end
       #    stack :margin_top => 5 do
       #      background darkgray
       #      para strong(link("Erweiterte Optionen"){ @more_options.toggle})
@@ -86,13 +88,13 @@ end
       flow :margin => 20, :margin_left => 320 do
         # todo fehlerbehandlung
         @start_button = button("Start", :margin_right => 4) do
-          refresh_setting()
+          #          refresh_setting()
           #todo verschieben im Hintergrund, besser: Fortschritt (siehe simple-downloader.rb))
           @progress_message.text = "Beginne verschieben."
           @progress_area.show
           Thread.start(@progress, @progress_message) do |progress, message|
             begin
-              mover = PictureMover.new(@setting.source_folder, @setting.target_folder)
+              mover = PictureMover.new(@source_folder.text, @target_folder.text)
               save_setting()
               mover.move do |file, percent|
                 progress.fraction = percent
@@ -103,7 +105,7 @@ end
               Shoes.error(e)
               Shoes.show_log
               @progress_area.hide
-            #ensure
+              #ensure
             end
           end
         end
@@ -151,27 +153,6 @@ end
   #  @gui_completed = stack :width => 1.0, :height => 207, :margin_right => 20
 
 
-  def settings_path
-    if RUBY_PLATFORM =~ /win32/
-      if ENV['USERPROFILE']
-        if File.exist?(File.join(File.expand_path(ENV['USERPROFILE']), "Application Data"))
-          user_data_directory = File.join File.expand_path(ENV['USERPROFILE']), "Application Data", "PicMov"
-        else
-          user_data_directory = File.join File.expand_path(ENV['USERPROFILE']), "PicMov"
-        end
-      else
-        user_data_directory = File.join File.expand_path(Dir.getwd), "data"
-      end
-    else
-      user_data_directory = File.expand_path(File.join("~", ".picmov"))
-    end
-
-    unless File.exist?(user_data_directory)
-      Dir.mkdir(user_data_directory)
-    end
-
-    return File.join(user_data_directory, "settings.yaml")
-  end
 
 
   #  def refresh_todo
@@ -183,22 +164,28 @@ end
   #    )
   #  end
 
+
+=begin unused method -
+
   def refresh_setting
     @setting.source_folder = @source_folder.text
     @setting.target_folder = @target_folder.text
-    @setting.file_pattern = @file_pattern.text
-    @setting.folder_pattern = @folder_pattern.text
-    @setting.delete_originals = @delete_originals.checked?
-    @setting.source_include_subfolders= @source_include_subfolders.checked?
+#    @setting.file_pattern = @file_pattern.text
+#    @setting.folder_pattern = @folder_pattern.text
+#    @setting.delete_originals = @delete_originals.checked?
+#    @setting.source_include_subfolders= @source_include_subfolders.checked?
   end
 
-  def refresh
-    @source_folder.text = @setting.source_folder
-    @target_folder.text = @setting.target_folder
-    @file_pattern.text = @setting.file_pattern
-    @folder_pattern.text = @setting.folder_pattern
-    @delete_originals.checked = @setting.delete_originals
-    @source_include_subfolders.checked = @setting.source_include_subfolders
+=end
+
+
+  def refresh_from_settings
+    @source_folder.text = PicMov::Settings.source_folder
+    @target_folder.text = PicMov::Settings.target_folder
+#    @file_pattern.text = @setting.file_pattern
+    #    @folder_pattern.text = @setting.folder_pattern
+    #    @delete_originals.checked = @setting.delete_originals
+    #    @source_include_subfolders.checked = @setting.source_include_subfolders
 
     #    refresh_todo
     #
@@ -286,75 +273,30 @@ end
   #  end
 
 
-  def load
-    if File.exist?(settings_path)
-      @setting = YAML::load(File.open(settings_path, 'r'))
-    else
-      @setting = Settings.default_setting
+  def load_setting
+    if PicMov::Settings.configured?
+#      @setting = YAML::load(File.open(settings_path, 'r'))
+      refresh_from_settings
     end
-Shoes.error(@setting)
-    Shoes.show_log
-    refresh
+#    else
+    #      @setting = Settings.default_setting
+    #    end
+    #Shoes.error(@setting)
+    #    Shoes.show_log
   end
 
 
   def save_setting
-    refresh_setting
-
-    File.open(settings_path, 'w') { |f|
-      f.write @setting.to_yaml
-    }
+    PicMov::Settings.save_settings(@source_folder.text, @target_folder.text)
+#    refresh_setting
+    #
+    #    File.open(settings_path, 'w') { |f|
+    #      f.write @setting.to_yaml
+    #    }
   end
 
-  load
+  load_setting
   Shoes.error("load")
   Shoes.show_log
-
-end
-
-class Settings
-  attr_accessor :source_folder
-  attr_accessor :source_include_subfolders
-  attr_accessor :delete_originals
-  attr_accessor :target_folder
-  attr_accessor :folder_pattern
-  attr_accessor :file_pattern
-
-
-=begin
-
-  def self.load(file)
-    if File.exist?(file)
-      return YAML::load(File.open(settings_path, 'r'))
-    else
-      default_setting
-    end
-  end
-
-=end
-
-
-
-=begin
-
-  def self.write(setting, file)
-    File.open(file, 'w') { |f|
-      f.write setting.to_yaml
-    }
-  end
-
-=end
-
-  def self.default_setting
-    setting = Settings.new
-    setting.source_include_subfolders = true
-    setting.delete_originals = false
-    setting.folder_pattern = ""
-    setting.file_pattern = ""
-    setting.source_folder=""
-    setting.target_folder=""
-    setting
-  end
-
 
 end
