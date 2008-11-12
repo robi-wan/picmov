@@ -1,37 +1,32 @@
 #!/usr/bin/ruby
 
-# Created by IntelliJ IDEA.
-# User: lede55
-# Date: 09.10.2007
-# Time: 17:03:35
-#
 #****************************************************************
 # Version 0.0.5
 # Datum: 29.05.2008
-# �nderungen:
+# Änderungen:
 # - In TimeMapper#mapping wird nun File.open mit einem Block anstelle von File.new (ohne close) verwendet. 
-#   Dadurch wird am Ende des Blocks die Datei geschlossen und es k�nnen mehr als ca. 500 Dateien 
+#   Dadurch wird am Ende des Blocks die Datei geschlossen und es können mehr als ca. 500 Dateien
 #   in einem Durchgang bearbeitet werden.
 #****************************************************************
 # Version 0.0.4
 # Datum: 15.05.2008
-# �nderungen:
-# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der n�chste TimeMapper des CompoundTimeMapper verwendet
+# Änderungen:
+# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der nächste TimeMapper des CompoundTimeMapper verwendet
 #****************************************************************
 # Version 0.0.3
 # Datum: 15.04.2008
-# �nderungen:
-# - CompoundTimeMapper: Erh�lt eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der n�chste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
+# Änderungen:
+# - CompoundTimeMapper: Erhält eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der nächste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
 # - TimeMapper verwendet nun als Default einen CompoundTimeMapper mit den Mappern EXIFTimeMapper, ModifiedTimeMapper, CurrentTimeMapper. Somit wird also EXIFTimeMapper als erstes verwendet.
 #****************************************************************
 # Version 0.0.2
 # Datum: 15.04.2008
-# �nderungen:
-# - TimeMapper bekommt nun ein Objekt hereingereicht, welches �ber die Methode time_for_mapping(file) aus dem �bergebenem File ein Datum liefert, welches f�r das Mapping verwendet werden soll.
-#  Drei Implementierungen f�r solch ein Objekt bereitgestellt:
+# Änderungen:
+# - TimeMapper bekommt nun ein Objekt hereingereicht, welches �ber die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
+#  Drei Implementierungen für solch ein Objekt bereitgestellt:
 #  - CurrentTimeMapper: Liefert das aktuelle Datum.
 #  - ModifiedTimeMapper: Liefert das modified-Datum der Datei.
-#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Ben�tigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
+#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Benötigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
 #  EXIFTimeMapper ist die Defaultvariante.
 #****************************************************************
 
@@ -47,11 +42,11 @@ require 'fileutils'
 # cration_date: YYYY-MM-DD_HH-mm-ss
 
 #Map, die Dateien zu einem Tagesdatum zuordnet
-# einfacher f�r Ordnererstellung
+# einfacher für Ordnererstellung
 
 # Ordnererstellung: wenn keiner vorhanden, neuen erstellen: YYYY_MM_DD
-# exakte Suche oder Pattern f�r Ordner (sinnvoll wenn z.B. ein Ordner YYYY_MM_DD_strand existiert
-# bei exakt w�rde neuer erstellt werden, bei pattern erfolgt append)
+# exakte Suche oder Pattern für Ordner (sinnvoll wenn z.B. ein Ordner YYYY_MM_DD_strand existiert
+# bei exakt würde neuer erstellt werden, bei pattern erfolgt append)
 # und was ist wenn mehrere ordner auf pattern passen? abfrage ala "gem update"
 
 class SimpleFileLister
@@ -114,8 +109,6 @@ class TimeMapper
       	modified_time = @time_mapper.time_for_mapping(file)
       	file_name_enhancement=modified_time.strftime(@file_pattern)
       	target_folder_name = modified_time.strftime(@folder_pattern)
-      ##      puts file.atime
-      ##      puts file.ctime
 
       	dup = DuplicationFile.new(file)
       	dup.source = f
@@ -124,8 +117,6 @@ class TimeMapper
       	@duplicates << dup
       end
       
-      ## (@sorted_files[target_folder_name]||=[]) << f ##
-
     end
     @duplicates
   end
@@ -175,7 +166,7 @@ class CompoundTimeMapper
     @time_mapper.each do |mapper|
       begin
       	time = mapper.time_for_mapping(file)
-	raise Exception.new("mapper returned no mapping time") unless time
+	    raise Exception.new("mapper returned no mapping time") unless time
         return time
       rescue Exception => details
         print("Error while getting time mapping (mapper=#{mapper.class}) for file #{file.path} => #{details}! Using another mapper!\n")

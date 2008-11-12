@@ -37,7 +37,6 @@ module PicMov
     private
 
     def self.settings_file_path
-#    File.join(File.dirname(__FILE__), "..", Settings::SETTINGS_FILE)
 
       if RUBY_PLATFORM =~ /win32/
         if ENV['USERPROFILE']
