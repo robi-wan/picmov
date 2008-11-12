@@ -8,30 +8,30 @@
 #****************************************************************
 # Version 0.0.5
 # Datum: 29.05.2008
-# Änderungen:
+# ï¿½nderungen:
 # - In TimeMapper#mapping wird nun File.open mit einem Block anstelle von File.new (ohne close) verwendet. 
-#   Dadurch wird am Ende des Blocks die Datei geschlossen und es können mehr als ca. 500 Dateien 
+#   Dadurch wird am Ende des Blocks die Datei geschlossen und es kï¿½nnen mehr als ca. 500 Dateien 
 #   in einem Durchgang bearbeitet werden.
 #****************************************************************
 # Version 0.0.4
 # Datum: 15.05.2008
-# Änderungen:
-# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der nächste TimeMapper des CompoundTimeMapper verwendet
+# ï¿½nderungen:
+# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der nï¿½chste TimeMapper des CompoundTimeMapper verwendet
 #****************************************************************
 # Version 0.0.3
 # Datum: 15.04.2008
-# Änderungen:
-# - CompoundTimeMapper: Erhält eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der nächste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
+# ï¿½nderungen:
+# - CompoundTimeMapper: Erhï¿½lt eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der nï¿½chste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
 # - TimeMapper verwendet nun als Default einen CompoundTimeMapper mit den Mappern EXIFTimeMapper, ModifiedTimeMapper, CurrentTimeMapper. Somit wird also EXIFTimeMapper als erstes verwendet.
 #****************************************************************
 # Version 0.0.2
 # Datum: 15.04.2008
-# Änderungen:
-# - TimeMapper bekommt nun ein Objekt hereingereicht, welches über die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
-#  Drei Implementierungen für solch ein Objekt bereitgestellt:
+# ï¿½nderungen:
+# - TimeMapper bekommt nun ein Objekt hereingereicht, welches ï¿½ber die Methode time_for_mapping(file) aus dem ï¿½bergebenem File ein Datum liefert, welches fï¿½r das Mapping verwendet werden soll.
+#  Drei Implementierungen fï¿½r solch ein Objekt bereitgestellt:
 #  - CurrentTimeMapper: Liefert das aktuelle Datum.
 #  - ModifiedTimeMapper: Liefert das modified-Datum der Datei.
-#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Benötigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
+#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Benï¿½tigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
 #  EXIFTimeMapper ist die Defaultvariante.
 #****************************************************************
 
@@ -47,11 +47,11 @@ require 'fileutils'
 # cration_date: YYYY-MM-DD_HH-mm-ss
 
 #Map, die Dateien zu einem Tagesdatum zuordnet
-# einfacher für Ordnererstellung
+# einfacher fï¿½r Ordnererstellung
 
 # Ordnererstellung: wenn keiner vorhanden, neuen erstellen: YYYY_MM_DD
-# exakte Suche oder Pattern für Ordner (sinnvoll wenn z.B. ein Ordner YYYY_MM_DD_strand existiert
-# bei exakt würde neuer erstellt werden, bei pattern erfolgt append)
+# exakte Suche oder Pattern fï¿½r Ordner (sinnvoll wenn z.B. ein Ordner YYYY_MM_DD_strand existiert
+# bei exakt wï¿½rde neuer erstellt werden, bei pattern erfolgt append)
 # und was ist wenn mehrere ordner auf pattern passen? abfrage ala "gem update"
 
 class SimpleFileLister
@@ -96,6 +96,8 @@ class FileNameModifier
 end
 
 class TimeMapper
+  attr_reader(:folder_pattern)
+  attr_reader(:file_pattern)
   def initialize(files=[], time_mapper = CompoundTimeMapper.new(EXIFTimeMapper.new, ModifiedTimeMapper.new, CurrentTimeMapper.new) ,folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
     @files = files
     @time_mapper = time_mapper
@@ -184,24 +186,6 @@ class CompoundTimeMapper
 end
 
 
-#~ class ModifiedTimeMapper < TimeMapper
-  
-  #~ def time_for_mapping(file)
-      #~ file.mtime
-  #~ end
-  
-#~ end
-
-#~ class EXIFTimeMapper < TimeMapper
-  #~ require 'rubygems'
-  #~ require 'exifr'
-
-  #~ def time_for_mapping(file)
-      #~ EXIFR::JPEG.new(file.path).date_time_original
-  #~ end
-
-#~ end
-
 class DuplicateCopier
 
   def initialize(target_folder)
@@ -235,8 +219,39 @@ class DuplicateCopier
 end
 
 
-def check_folder(file)
-  raise Exception.new("Angegebener Ordner existiert nicht: #{file}") unless File.directory?(file)
+class PictureMover
+
+  attr_reader :source
+  attr_reader :target
+
+  def initialize(source, target)
+    PictureMover.check_folder source
+    PictureMover.check_folder target
+    @source = source
+    @target = target
+  end
+
+  def move
+    files = SimpleFileLister.new(@source).list
+
+    copier = DuplicateCopier.new(@target)
+
+    mapper = TimeMapper.new(files)
+
+    mapper.mapping.each_with_index do |dup, index|
+      if block_given?
+        percent = (index +1).to_f / files.length.to_f
+        yield(dup, percent)
+      end
+      copier.handle(dup)
+    end
+  end
+
+  def self.check_folder(file)
+    raise Exception.new("Angegebener Ordner existiert nicht: #{file}") unless File.directory?(file)
+  end
+
+
 end
 
 ### --- Hauptprogramm ---
@@ -244,25 +259,13 @@ if $0 == __FILE__ then
 
   begin
 
-    raise Exception.new("quell- und zielordner erforderlich") if ARGV.length != 2
+    raise Exception.new("Angabe von Quell- und Zielordner erforderlich!") if ARGV.length != 2
     source=ARGV[0]
     target=ARGV[1]
-    check_folder source
-    check_folder target
 
-    files = SimpleFileLister.new(source).list
-
-    copier = DuplicateCopier.new(target)
-
-    #mapper = ModifiedTimeMapper.new(files)
-    mapper = TimeMapper.new(files)
-    
-    
-    mapper.mapping.each do |dup|
-#      puts dup.source
-#      puts (dup.target + "/" + dup.new_name)
-      copier.handle(dup)
-    end
+    mover = PictureMover.new(source, target)
+    #todo kopiervorgang selbst mittels block protokollieren (mv :verbose entfernen)
+    mover.move
 
   rescue Exception => details
     print("Error, program will exit => #{details}!\n")
