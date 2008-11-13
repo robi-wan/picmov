@@ -1,0 +1,20 @@
+== PicMov
+
+A simple tool for copying and renaming images from cameras. It started as an CLI tool.
+Recently I added a desktop application layer. This layer uses shoes (written by why).
+
+This is app is far from ready but is useful for the simple case...
+
+TODO
+
+- Support for subfolders
+
+- Just handle image files
+
+- User defined pattern for folder and file names
+
+- Delete files after successful copy and rename
+
+- Tests
+
+- ...
