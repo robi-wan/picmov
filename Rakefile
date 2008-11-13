@@ -3,6 +3,6 @@ require 'rake'
 task :default => [:run]
 
 task :run do
-  `shoes #{File.join(File.dirname(__FILE__),"picmov-gui.rb")}`
+  `shoes #{File.join(File.dirname(__FILE__),"picmov_shoes.rb")}`
 end
 
