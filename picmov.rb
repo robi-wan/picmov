@@ -1,53 +1,6 @@
 #!/usr/bin/ruby
 
-#****************************************************************
-# Version 0.0.5
-# Datum: 29.05.2008
-# Änderungen:
-# - In TimeMapper#mapping wird nun File.open mit einem Block anstelle von File.new (ohne close) verwendet. 
-#   Dadurch wird am Ende des Blocks die Datei geschlossen und es können mehr als ca. 500 Dateien
-#   in einem Durchgang bearbeitet werden.
-#****************************************************************
-# Version 0.0.4
-# Datum: 15.05.2008
-# Änderungen:
-# - Wenn im CompoundTimeMapper ein Mapper nil als Ergebnis liefert, dann wird der nächste TimeMapper des CompoundTimeMapper verwendet
-#****************************************************************
-# Version 0.0.3
-# Datum: 15.04.2008
-# Änderungen:
-# - CompoundTimeMapper: Erhält eine Liste von TimeMappern. Falls der erste TimeMapper kein Ergebnis liefert, wird der nächste TimeMapper verwendet usw. usw. Also eine Art Chain of Responsibility.
-# - TimeMapper verwendet nun als Default einen CompoundTimeMapper mit den Mappern EXIFTimeMapper, ModifiedTimeMapper, CurrentTimeMapper. Somit wird also EXIFTimeMapper als erstes verwendet.
-#****************************************************************
-# Version 0.0.2
-# Datum: 15.04.2008
-# Änderungen:
-# - TimeMapper bekommt nun ein Objekt hereingereicht, welches �ber die Methode time_for_mapping(file) aus dem übergebenem File ein Datum liefert, welches für das Mapping verwendet werden soll.
-#  Drei Implementierungen für solch ein Objekt bereitgestellt:
-#  - CurrentTimeMapper: Liefert das aktuelle Datum.
-#  - ModifiedTimeMapper: Liefert das modified-Datum der Datei.
-#  - EXIFTimeMapper: Liefert aus den Exif-Informationen des Bildes den Wert von 'DateTimeOriginal'. Benötigt die Bibliothek 'exifr' http://exifr.rubyforge.org/.
-#  EXIFTimeMapper ist die Defaultvariante.
-#****************************************************************
-
 require 'fileutils'
-
-#Aufruf: skript source_path [target_path]
-#Wenn target_path nicht angegeben wird, dann wird das aktuelle Verzeichnis angenommen
-
-# Option: -m --move Verschiebt die Dateien, anstatt sie nur zu kopieren
-
-# FileNameMapper: Muster, nach dem die neuen Dateien benannt werden
-# default: <name>_<creation_date>.<file_suffix>
-# cration_date: YYYY-MM-DD_HH-mm-ss
-
-#Map, die Dateien zu einem Tagesdatum zuordnet
-# einfacher für Ordnererstellung
-
-# Ordnererstellung: wenn keiner vorhanden, neuen erstellen: YYYY_MM_DD
-# exakte Suche oder Pattern für Ordner (sinnvoll wenn z.B. ein Ordner YYYY_MM_DD_strand existiert
-# bei exakt würde neuer erstellt werden, bei pattern erfolgt append)
-# und was ist wenn mehrere ordner auf pattern passen? abfrage ala "gem update"
 
 class SimpleFileLister
   def initialize(folder=Dir.pwd)

@@ -111,17 +111,12 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable
     Shoes.show_log
   end
 
-  def refresh_from_settings
-    @source_folder.text = PicMov::Settings.source_folder
-    @target_folder.text = PicMov::Settings.target_folder
-  end
-
   def load_setting
     if PicMov::Settings.configured?
-      refresh_from_settings
+      @source_folder.text = PicMov::Settings.source_folder
+      @target_folder.text = PicMov::Settings.target_folder
     end
   end
-
 
   def save_setting
     PicMov::Settings.save_settings(@source_folder.text, @target_folder.text)
