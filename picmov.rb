@@ -10,7 +10,7 @@ class SimpleFileLister
   def list
     files=[]
     FileUtils.cd(@folder) do |path|
-      files=Dir.glob("*").collect{|f| File.join(@folder, f)}
+      files=Dir.glob("*").select{|f| File.file?(f)}.collect{|f| File.join(@folder, f)}
     end
     files
   end

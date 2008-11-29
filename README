@@ -17,4 +17,6 @@ TODO
 
 - Tests
 
+- use Logger for output messages (STDOUT for CLI, Shoes.console for Shoes-app)
+
 - ...
