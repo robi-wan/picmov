@@ -1,18 +1,17 @@
-# "C:\Program Files\Shoes\0.r970\shoes.exe" D:\home\docs\dev\picmov\picmov-gui.rb
 $:.push(File.join(File.dirname(__FILE__), 'lib'))
+
+# installiert benoetigte gems beim Start
+Shoes.setup do
+  gem 'exifr'
+end
 
 require 'yaml'
 require 'picmov'
 require 'settings'
 
-# installiert benöigte gems beim Start
-Shoes.setup do
-  gem 'exifr'
-end
-
 Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable => true do
 
-  background white
+  background "#EEE".."#9AA"
   background tan, :height => 62
   stack do
     caption "A Picture Mover", :margin => 8, :stroke => white
@@ -26,8 +25,8 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable
         para "1. Bilder auswählen"
         para "Quellverzeichnis:"
         flow do
-          @source_folder = edit_line(:width => 250, :margin_right => 10)
-          button("Auswaehlen...") { dir = ask_open_folder; @source_folder.text = dir if dir}
+          @source_folder = edit_line(:width => 300, :margin_right => 10)
+          button("Ordner...") { dir = ask_open_folder; @source_folder.text = dir if dir}
         end
         flow :margin_left => 20, :hidden => true do
           @source_include_subfolders = check
@@ -39,8 +38,8 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable
         para "2. Speicherort für Bilder auswählen"
         para "Zielverzeichnis:"
         flow do
-          @target_folder = edit_line(:width => 250, :margin_right => 10)
-          button("Auswaehlen..."){ dir = ask_open_folder; @target_folder.text = dir if dir }
+          @target_folder = edit_line(:width => 300, :margin_right => 10)
+          button("Ordner..."){ dir = ask_open_folder; @target_folder.text = dir if dir }
         end
       end
 
