@@ -43,9 +43,21 @@ class FileNameModifier
 
 end
 
+class PrefixFileNameModifier
+
+  def do(file, enhancement)
+    extension=File.extname( file )
+    name = File.basename( file, extension)
+    enhancement << "_" << name << extension
+  end
+
+end
+
+
 class TimeMapper
   attr_reader(:folder_pattern)
   attr_reader(:file_pattern)
+  attr_accessor(:modifier)
   def initialize(files=[], time_mapper = CompoundTimeMapper.new(EXIFTimeMapper.new, ModifiedTimeMapper.new, CurrentTimeMapper.new) ,folder_pattern="%Y_%m_%d", file_pattern="%Y-%m-%d_%H-%M-%S")
     @files = files
     @time_mapper = time_mapper
@@ -181,6 +193,7 @@ class PictureMover
     copier = DuplicateCopier.new(@target)
 
     mapper = TimeMapper.new(files)
+    mapper.modifier = PrefixFileNameModifier.new
 
     mapper.mapping.each_with_index do |dup, index|
       if block_given?
