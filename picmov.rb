@@ -24,6 +24,8 @@ class DuplicationFile
   attr_accessor :target
   # Der neue Name der Zieldatei
   attr_accessor :new_name
+  # Der Name der Zieldatei im Dateisystem (kann von :new_name abweichen)
+  attr_accessor :real_new_name
   # Falls es benoetigt wird: Ein File-Objekt der Quelle
   attr_reader :file
 
@@ -160,7 +162,8 @@ class DuplicateCopier
       if File.exist?(new_name) then
         new_name=FileNameModifier.new.do(new_name, "(#{count_file(new_name)})")
       end
-      FileUtils.mv(File.basename(dup_file.source), new_name, :verbose => true )
+      dup_file.real_new_name=new_name
+      FileUtils.mv(File.basename(dup_file.source), dup_file.real_new_name, :verbose => false )
     end
   end
 
@@ -196,11 +199,11 @@ class PictureMover
     mapper.modifier = PrefixFileNameModifier.new
 
     mapper.mapping.each_with_index do |dup, index|
+      copier.handle(dup)
       if block_given?
         percent = (index +1).to_f / files.length.to_f
         yield(dup, percent)
       end
-      copier.handle(dup)
     end
   end
 
@@ -221,8 +224,9 @@ if $0 == __FILE__ then
     target=ARGV[1]
 
     mover = PictureMover.new(source, target)
-    #todo kopiervorgang selbst mittels block protokollieren (mv :verbose entfernen)
-    mover.move
+    mover.move do |file, fraction|
+      print("#{File.basename(file.source)} => #{file.real_new_name}\n")
+    end
 
   rescue Exception => details
     print("Error, program will exit => #{details}!\n")
