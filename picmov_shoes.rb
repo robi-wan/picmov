@@ -7,7 +7,6 @@ end
 
 require 'yaml'
 require 'picmov'
-require 'settings'
 
 Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable => true do
 
@@ -44,7 +43,7 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable
       end
 
       flow do
-        time_mapper = TimeMapper.new
+        time_mapper = PicMov::TimeMapper.new
         now = Time.now
         file = "DSC2134_#{now.strftime(time_mapper.file_pattern)}.jpg"
         inscription "Die Bilder werden nach diesem Muster umbenannt:\nDSC2134.jpg => #{File.join(now.strftime(time_mapper.folder_pattern), file)}"
@@ -76,7 +75,7 @@ Shoes.app :title => "A Picture Mover", :width => 520, :height => 520, :resizable
           @progress_area.show
           Thread.start(@progress, @progress_message) do |progress, message|
             begin
-              mover = PictureMover.new(@source_folder.text, @target_folder.text)
+              mover = PicMov::PictureMover.new(@source_folder.text, @target_folder.text)
               save_setting()
               mover.move do |file, percent|
                 progress.fraction = percent

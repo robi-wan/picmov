@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+require 'picmov'
+
+begin
+
+  raise Exception.new("Angabe von Quell- und Zielordner erforderlich!") if ARGV.length != 2
+  source=ARGV[0]
+  target=ARGV[1]
+
+  mover = PicMov::PictureMover.new(source, target)
+  mover.move do |file, fraction|
+    print("#{File.basename(file.source)} => #{file.real_new_name}\n")
+  end
+
+rescue Exception => details
+  print("Error, program will exit => #{details}!\n")
+  print(details.backtrace().join("\n"))
+  exit(1)
+end

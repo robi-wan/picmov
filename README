@@ -19,4 +19,10 @@ TODO
 
 - use Logger for output messages (STDOUT for CLI, Shoes.console for Shoes-app)
 
+- Rake tasks (test, ...)
+
+- move pivmov_shoes to bin
+
+- load path handling in /bin - files
+
 - ...
