@@ -15,13 +15,13 @@ TODO
 
 - Delete files after successful copy and rename
 
-- Tests
+- Tests (rspec, shoulda, construct [http://devver.net/blog/2009/08/unit-testing-filesystem-interaction/], ...)
 
 - use Logger for output messages (STDOUT for CLI, Shoes.console for Shoes-app)
 
 - Rake tasks (test, ...)
 
-- move pivmov_shoes to bin
+- move picmov_shoes to bin
 
 - load path handling in /bin - files
 
